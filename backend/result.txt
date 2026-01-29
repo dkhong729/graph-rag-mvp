@@ -1,0 +1,242 @@
+[Q] PCI 擴充板會帶來什麼風險？
+[Error] API 連線或解析失敗: 404 Client Error: Not Found for url: https://api.deepseek.com/
+{
+  "answer": "針對『PCI 擴充板會帶來什麼風險？』，根據歷史決策紀錄，以下情境最相關，請特別留意高風險邊界。",
+  "matched_contexts": [
+    {
+      "context_id": "CTX-001",
+      "reason": "Decision boundary relevance",
+      "boundary_level": "unspecified"
+    },
+    {
+      "context_id": null,
+      "reason": "Decision boundary relevance",
+      "boundary_level": "boundary:CTX-001:safety_critical"
+    },
+    {
+      "context_id": "CTX-002",
+      "reason": "Decision boundary relevance",
+      "boundary_level": "unspecified"
+    },
+    {
+      "context_id": "CTX-003",
+      "reason": "Decision boundary relevance",
+      "boundary_level": "unspecified"
+    },
+    {
+      "context_id": "CTX-004",
+      "reason": "Decision boundary relevance",
+      "boundary_level": "unspecified"
+    }
+  ],
+  "confidence": 0.5
+}
+
+[Q] 哪些決策屬於 no second chance？
+[Error] API 連線或解析失敗: 404 Client Error: Not Found for url: https://api.deepseek.com/
+{
+  "answer": "針對『哪些決策屬於 no second chance？』，根據歷史決策紀錄，以下情境最相關，請特別留意高風險邊界。",
+  "matched_contexts": [
+    {
+      "context_id": null,
+      "reason": "Decision boundary relevance",
+      "boundary_level": "boundary:CTX-001:safety_critical"
+    },
+    {
+      "context_id": "CTX-001",
+      "reason": "Decision boundary relevance",
+      "boundary_level": "unspecified"
+    },
+    {
+      "context_id": "CTX-002",
+      "reason": "Decision boundary relevance",
+      "boundary_level": "unspecified"
+    },
+    {
+      "context_id": "CTX-003",
+      "reason": "Decision boundary relevance",
+      "boundary_level": "unspecified"
+    },
+    {
+      "context_id": "CTX-004",
+      "reason": "Decision boundary relevance",
+      "boundary_level": "unspecified"
+    }
+  ],
+  "confidence": 0.5
+}
+
+[Q] 如果電源中斷發生，系統會有什麼後果？
+[Error] API 連線或解析失敗: 404 Client Error: Not Found for url: https://api.deepseek.com/
+{
+  "answer": "針對『如果電源中斷發生，系統會有什麼後果？』，根據歷史決策紀錄，以下情境最相關，請特別留意高風險邊界。",      
+  "matched_contexts": [
+    {
+      "context_id": "CTX-001",
+      "reason": "Decision boundary relevance",
+      "boundary_level": "unspecified"
+    },
+    {
+      "context_id": null,
+      "reason": "Decision boundary relevance",
+      "boundary_level": "boundary:CTX-001:safety_critical"
+    },
+    {
+      "context_id": "CTX-002",
+      "reason": "Decision boundary relevance",
+      "boundary_level": "unspecified"
+    },
+    {
+      "context_id": "CTX-003",
+      "reason": "Decision boundary relevance",
+      "boundary_level": "unspecified"
+    },
+    {
+      "context_id": "CTX-004",
+      "reason": "Decision boundary relevance",
+      "boundary_level": "unspecified"
+    }
+  ],
+  "confidence": 0.5
+}
+
+=== TEST 2: Decision Support ===
+
+[Decision] 我現在要在工廠系統中新增一個 PCI 擴充模組，希望系統可以長時間穩定運作，請問有哪些相似的歷史決策？我需要注意哪些 高風險或不可逆的地方？
+[Error] API 連線或解析失敗: 404 Client Error: Not Found for url: https://api.deepseek.com/
+{
+  "answer": "針對『我現在要在工廠系統中新增一個 PCI 擴充模組，希望系統可以長時間穩定運作，請問有哪些相似的歷史決策？我需要 注意哪些高風險或不可逆的地方？』，根據歷史決策紀錄，以下情境最相關，請特別留意高風險邊界。",
+  "matched_contexts": [
+    {
+      "context_id": "CTX-001",
+      "reason": "Decision boundary relevance",
+      "boundary_level": "unspecified"
+    },
+    {
+      "context_id": null,
+      "reason": "Decision boundary relevance",
+      "boundary_level": "boundary:CTX-001:safety_critical"
+    },
+      "reason": "Decision boundary relevance",
+      "boundary_level": "boundary:CTX-001:safety_critical"
+    },
+    {
+      "context_id": "CTX-002",
+      "reason": "Decision boundary relevance",
+      "boundary_level": "unspecified"
+    },
+    {
+      "context_id": "CTX-003",
+      "reason": "Decision boundary relevance",
+      "boundary_level": "unspecified"
+    },
+    {
+      "reason": "Decision boundary relevance",
+      "boundary_level": "boundary:CTX-001:safety_critical"
+    },
+    {
+      "context_id": "CTX-002",
+      "reason": "Decision boundary relevance",
+      "boundary_level": "unspecified"
+    },
+    {
+      "context_id": "CTX-003",
+      "reason": "Decision boundary relevance",
+      "boundary_level": "unspecified"
+    },
+      "reason": "Decision boundary relevance",
+      "boundary_level": "boundary:CTX-001:safety_critical"
+    },
+    {
+      "context_id": "CTX-002",
+      "reason": "Decision boundary relevance",
+      "boundary_level": "unspecified"
+    },
+    {
+      "context_id": "CTX-003",
+      "reason": "Decision boundary relevance",
+      "reason": "Decision boundary relevance",
+      "boundary_level": "boundary:CTX-001:safety_critical"
+    },
+    {
+      "context_id": "CTX-002",
+      "reason": "Decision boundary relevance",
+      "boundary_level": "unspecified"
+    },
+    {
+      "context_id": "CTX-003",
+      "reason": "Decision boundary relevance",
+      "boundary_level": "boundary:CTX-001:safety_critical"
+    },
+    {
+      "context_id": "CTX-002",
+      "reason": "Decision boundary relevance",
+      "boundary_level": "unspecified"
+    },
+    {
+      "reason": "Decision boundary relevance",
+      "boundary_level": "boundary:CTX-001:safety_critical"
+    },
+    {
+      "context_id": "CTX-002",
+      "reason": "Decision boundary relevance",
+      "boundary_level": "unspecified"
+    },
+      "reason": "Decision boundary relevance",
+      "boundary_level": "boundary:CTX-001:safety_critical"
+    },
+    {
+      "context_id": "CTX-002",
+      "reason": "Decision boundary relevance",
+      "boundary_level": "unspecified"
+    },
+      "reason": "Decision boundary relevance",
+      "boundary_level": "boundary:CTX-001:safety_critical"
+    },
+    {
+      "context_id": "CTX-002",
+      "reason": "Decision boundary relevance",
+      "boundary_level": "boundary:CTX-001:safety_critical"
+    },
+    {
+      "context_id": "CTX-002",
+      "reason": "Decision boundary relevance",
+    {
+      "context_id": "CTX-002",
+      "reason": "Decision boundary relevance",
+      "context_id": "CTX-002",
+      "reason": "Decision boundary relevance",
+      "boundary_level": "unspecified"
+    },
+      "reason": "Decision boundary relevance",
+      "boundary_level": "unspecified"
+    },
+      "boundary_level": "unspecified"
+    },
+    {
+      "context_id": "CTX-003",
+      "reason": "Decision boundary relevance",
+    },
+    {
+      "context_id": "CTX-003",
+      "reason": "Decision boundary relevance",
+    {
+      "context_id": "CTX-003",
+      "reason": "Decision boundary relevance",
+      "boundary_level": "unspecified"
+    },
+      "context_id": "CTX-003",
+      "reason": "Decision boundary relevance",
+      "boundary_level": "unspecified"
+    },
+      "boundary_level": "unspecified"
+    },
+    },
+    {
+      "context_id": "CTX-004",
+      "reason": "Decision boundary relevance",
+      "boundary_level": "unspecified"
+    }
+  ],
+  "confidence": 0.5
+}

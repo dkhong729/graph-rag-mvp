@@ -1,0 +1,97 @@
+{ 
+  "contexts": [
+    {
+      "context_id": "CTX-001",
+      "scenario_summary": "Edge AI IPC deployment in high-temperature SMT factory",
+
+      "entities": [
+        {
+          "name": "NexCOBOT ATC-3500",
+          "type": "Device",
+          "description": "Fanless industrial computer for edge AI workloads"
+        },
+        {
+          "name": "SMT production line",
+          "type": "Environment",
+          "description": "High-density surface-mount technology line with continuous operation"
+        },
+        {
+          "name": "Ambient temperature above 45C",
+          "type": "Constraint",
+          "description": "Factory temperature exceeding standard IPC operating range"
+        }
+      ],
+
+      "conditions": [
+        "24/7 operation",
+        "High ambient temperature",
+        "Limited airflow"
+      ],
+
+      "observed_issues": [
+        "Unexpected thermal throttling",
+        "System instability after prolonged operation"
+      ],
+
+      "outcomes": [
+        "Reduced AI inference throughput",
+        "Increased maintenance incidents"
+      ],
+
+      "recommended_solutions": [
+        "Deploy heat-sink enhanced enclosure",
+        "Lower sustained CPU frequency",
+        "Install localized airflow duct"
+      ],
+
+      "confidence_score": 0.87,
+      "source_note": "Customer deployment report Q3"
+    },
+
+    {
+      "context_id": "CTX-002",
+      "scenario_summary": "Vision inspection IPC failure in vibration-intensive CNC workshop",
+
+      "entities": [
+        {
+          "name": "Edge AI Vision System",
+          "type": "Device",
+          "description": "Camera-based quality inspection system"
+        },
+        {
+          "name": "CNC machining center",
+          "type": "Environment",
+          "description": "Heavy vibration machining environment"
+        },
+        {
+          "name": "SSD storage",
+          "type": "Component",
+          "description": "Standard commercial-grade solid-state drive"
+        }
+      ],
+
+      "conditions": [
+        "Continuous vibration",
+        "Metal dust exposure"
+      ],
+
+      "observed_issues": [
+        "Intermittent system reboots",
+        "Data corruption events"
+      ],
+
+      "outcomes": [
+        "Inspection downtime",
+        "Increased false rejection rate"
+      ],
+
+      "recommended_solutions": [
+        "Replace SSD with industrial-grade storage",
+        "Add vibration dampening mount"
+      ],
+
+      "confidence_score": 0.91,
+      "source_note": "Post-installation troubleshooting log"
+    }
+  ]
+}

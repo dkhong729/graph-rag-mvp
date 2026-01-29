@@ -1,0 +1,874 @@
+{
+  "document_metadata": {
+    "document_id": "Hypergraph-Driven-Retrieval-Augmented.pdf",
+    "document_title": "Combating LLM Hallucinations using Hypergraph-Driven Retrieval-Augmented Generation",
+    "document_type": "Research Paper",
+    "vendor": "Tsinghua University / Xi'an Jiaotong University",
+    "product_or_topic": "Hyper-RAG (Hypergraph RAG) framework for hallucination mitigation in LLMs",
+    "version": "v1 (pre-print)"
+  },
+  "contexts": [
+    {
+      "context_id": "CTX-001",
+      "decision_level": "L",
+      "title": {
+        "zh": "在醫學領域中不應直接使用純 LLM 進行診斷決策",
+        "en": "Direct use of raw LLMs for medical diagnostic decisions is unacceptable"
+      },
+      "context_intents": ["risk_prevention", "failure_analysis", "compliance", "system_evolution"],
+      "primary_roles": ["architect", "compliance", "senior_engineer"],
+      "entities": [
+        {
+          "name": "Large Language Model (LLM)",
+          "type": "Solution",
+          "description": {
+            "zh": "大型語言模型，擅長生成內容但可能產生與事實不符的幻覺",
+            "en": "Large language model, proficient in content generation but prone to factual hallucinations"
+          }
+        },
+        {
+          "name": "Hallucination",
+          "type": "Failure",
+          "description": {
+            "zh": "模型生成內容與事實不符，醫學中可能導致誤診",
+            "en": "Generated content deviates from factual accuracy, potentially causing misdiagnosis in medicine"
+          }
+        },
+        {
+          "name": "Medical diagnostic system",
+          "type": "System",
+          "description": {
+            "zh": "高風險醫療決策系統，錯誤可能導致嚴重後果",
+            "en": "High-stakes medical decision system where errors can lead to severe outcomes"
+          }
+        }
+      ],
+      "conditions": {
+        "zh": ["當LLM在未經檢索增強的情況下直接用於醫療問答", "當查詢涉及專業術語、劑量或診斷關係"],
+        "en": ["When LLMs are used directly for medical QA without retrieval augmentation", "When queries involve specialized terminology, dosages, or diagnostic relationships"]
+      },
+      "observed_issues_or_risks": {
+        "zh": ["LLM幻覺可能導致症狀與疾病錯誤關聯", "即使回答邏輯連貫，關鍵數據錯誤可能造成醫療事故", "模型訓練中的數據壓縮導致約2%的資訊嚴重失真"],
+        "en": ["LLM hallucinations can incorrectly associate symptoms with unrelated conditions", "Even coherent responses may contain critical factual errors leading to medical harm", "Data compression during training results in ~2% of information being severely inaccurate"]
+      },
+      "outcomes_or_consequences": {
+        "zh": ["誤導醫療專業人員", "延誤診斷或錯誤治療", "法律與倫理責任風險"],
+        "en": ["Misleading healthcare professionals", "Delayed or incorrect treatment", "Legal and ethical liability risks"]
+      },
+      "decision_boundaries": [
+        {
+          "boundary_type": "safety_critical",
+          "description": {
+            "zh": "在醫療診斷等高風險場景中，不可信賴未經外部知識錨定的LLM原生輸出",
+            "en": "In high-stakes scenarios like medical diagnosis, raw LLM outputs without external knowledge anchoring are not trustworthy"
+          },
+          "affected_roles": ["architect", "operator", "compliance"]
+        }
+      ],
+      "non_applicability_notes": {
+        "zh": "常見的「LLM邏輯連貫即視為可靠」的假設在此情境下不成立。邏輯正確不代表事實正確。",
+        "en": "The common assumption that 'logical coherence implies reliability' in LLMs does NOT apply here. Logical soundness does not guarantee factual accuracy."
+      },
+      "architecture_evolution_note": {
+        "zh": "當系統從封閉式問答擴展到開放式複雜醫療查詢時，純LLM的幻覺風險呈非線性增長。",
+        "en": "As the system evolves from closed-ended QA to open-ended complex medical queries, hallucination risk of raw LLMs increases non-linearly."
+      },
+      "counterfactuals": [
+        {
+          "changed_condition": {
+            "zh": "若直接將LLM用於神經學診斷輔助，未採用任何檢索增強",
+            "en": "If LLMs were directly used for neurological diagnostic assistance without any retrieval augmentation"
+          },
+          "alternative_outcome": {
+            "zh": "模型可能將過度換氣錯誤歸因於腦幹病變，而忽略原發性腦淋巴瘤等其他病因，導致診斷誤導。",
+            "en": "The model might incorrectly attribute hyperventilation to pontine lesions, overlooking other causes like primary cerebral lymphoma, leading to diagnostic misdirection."
+          }
+        }
+      ],
+      "confidence_score": 0.98,
+      "source_reference": {
+        "section": "Abstract, Introduction",
+        "page": "1-2"
+      },
+      "llm_usage_policy": {
+        "allowed": ["summarize_context", "explain_existing_decisions", "translate_between_languages"],
+        "forbidden": ["generate_new_decisions", "override_boundaries", "invent_facts"]
+      }
+    },
+    {
+      "context_id": "CTX-002",
+      "decision_level": "L",
+      "title": {
+        "zh": "選擇圖結構 vs 超圖結構來建模領域知識以減輕幻覺",
+        "en": "Choosing graph vs hypergraph structures for domain knowledge modeling to mitigate hallucinations"
+      },
+      "context_intents": ["architecture_decision", "system_evolution", "failure_analysis"],
+      "primary_roles": ["architect", "senior_engineer"],
+      "entities": [
+        {
+          "name": "Traditional Graph (GraphRAG/LightRAG)",
+          "type": "Solution",
+          "description": {
+            "zh": "使用邊連接兩個節點，僅能表示成對關聯",
+            "en": "Uses edges connecting two nodes, can only represent pairwise correlations"
+          }
+        },
+        {
+          "name": "Hypergraph (Hyper-RAG)",
+          "type": "Solution",
+          "description": {
+            "zh": "使用超邊連接任意數量節點，可表示多元（高階）關聯",
+            "en": "Uses hyperedges connecting any number of nodes, can represent multi-way (higher-order) correlations"
+          }
+        },
+        {
+          "name": "Beyond-pairwise correlation",
+          "type": "Constraint",
+          "description": {
+            "zh": "涉及三個或以上實體的複雜交互關係（如多種藥物交互、多角色事件）",
+            "en": "Complex interactions involving three or more entities (e.g., multi-drug interactions, multi-character events)"
+          }
+        }
+      ],
+      "conditions": {
+        "zh": ["當領域知識涉及複雜的多元實體交互", "當查詢問題具有嵌套或多層次結構", "當傳統圖方法導致資訊遺失影響回答品質"],
+        "en": ["When domain knowledge involves complex multi-entity interactions", "When queries are nested or multi-layered", "When traditional graph methods cause information loss affecting response quality"]
+      },
+      "observed_issues_or_risks": {
+        "zh": ["傳統圖遺失高階關聯（如藥物多體交互、多角色敘事事件）", "僅依賴成對關聯在複雜查詢下性能下降", "GraphRAG的聚類步驟耗時且資源密集"],
+        "en": ["Traditional graphs lose higher-order correlations (e.g., multi-drug interactions, multi-character narrative events)", "Relying solely on pairwise correlations leads to performance decline with complex queries", "GraphRAG's clustering step is time-consuming and resource-intensive"]
+      },
+      "outcomes_or_consequences": {
+        "zh": ["Hyper-RAG 平均提升準確率 12.3%，優於 GraphRAG 的 6.3%", "在查詢複雜度增加時，Hyper-RAG 性能保持穩定，而其他方法下降", "高階關聯的提取雖增加建構步驟，但數量遠低於低階關聯，可離線處理"],
+        "en": ["Hyper-RAG improves accuracy by 12.3% on average, outperforming GraphRAG's 6.3%", "Hyper-RAG maintains stable performance with increasing query complexity, while other methods decline", "Extracting high-order correlations adds construction steps, but their count is much lower than low-order ones and can be done offline"]
+      },
+      "decision_boundaries": [
+        {
+          "boundary_type": "irreversible",
+          "description": {
+            "zh": "一旦選擇傳統圖結構建立知識庫，後續無法輕易補回遺失的高階關聯資訊，可能永久限制系統處理複雜查詢的能力。",
+            "en": "Once a traditional graph structure is chosen for the knowledge base, the lost higher-order correlation information cannot be easily retrofitted, potentially permanently limiting the system's ability to handle complex queries."
+          },
+          "affected_roles": ["architect", "senior_engineer"]
+        }
+      ],
+      "non_applicability_notes": {
+        "zh": "「圖結構足以表示所有關聯」的常見假設在涉及多元交互的領域（如醫學、敘事）中不成立。",
+        "en": "The common assumption that 'graph structures are sufficient to represent all correlations' does NOT hold in domains involving multi-way interactions (e.g., medicine, narrative)."
+      },
+      "architecture_evolution_note": {
+        "zh": "當系統從處理簡單單階問題，擴展到處理多層嵌套的複雜問題時，僅有低階關聯的知識表示會成為瓶頸。高階關聯的完備性變得至關重要。",
+        "en": "As the system evolves from handling simple one-stage questions to complex multi-layered nested questions, knowledge representations with only low-order correlations become a bottleneck. The completeness of high-order correlations becomes critical."
+      },
+      "counterfactuals": [
+        {
+          "changed_condition": {
+            "zh": "若在神經醫學知識庫建構中僅使用傳統圖（GraphRAG），忽略高階關聯提取",
+            "en": "If only traditional graphs (GraphRAG) were used for neurological knowledge base construction, ignoring higher-order correlation extraction"
+          },
+          "alternative_outcome": {
+            "zh": "在回答涉及「腦幹、原發性腦淋巴瘤、神經病變、屍檢」多元關聯的複雜問題時，系統無法提供完整準確的上下文，可能遺漏關鍵病理關聯。",
+            "en": "When answering complex questions involving multi-entity correlations like 'brainstem, primary cerebral lymphoma, neurologic lesions, postmortem examination', the system would fail to provide complete and accurate context, potentially missing critical pathological connections."
+          }
+        }
+      ],
+      "confidence_score": 0.95,
+      "source_reference": {
+        "section": "Abstract, Introduction, Fig. 1 description, Section 1.1 & 1.2",
+        "page": "1-5, 8-12"
+      },
+      "llm_usage_policy": {
+        "allowed": ["summarize_context", "explain_existing_decisions", "translate_between_languages"],
+        "forbidden": ["generate_new_decisions", "override_boundaries", "invent_facts"]
+      }
+    },
+    {
+      "context_id": "CTX-003",
+      "decision_level": "M",
+      "title": {
+        "zh": "為平衡效能與準確性，選擇 Hyper-RAG-Lite 而非 LightRAG 作為輕量化解決方案",
+        "en": "Choosing Hyper-RAG-Lite over LightRAG for a lightweight solution balancing efficiency and accuracy"
+      },
+      "context_intents": ["architecture_decision", "pre_sales_evaluation", "system_evolution"],
+      "primary_roles": ["architect", "senior_engineer", "pre_sales"],
+      "entities": [
+        {
+          "name": "LightRAG",
+          "type": "Solution",
+          "description": {
+            "zh": "雙層圖RAG，省略聚類步驟以提升速度，但因此遺失高階關聯資訊",
+            "en": "Dual-layer graph RAG, omits clustering for speed but loses higher-order relational information"
+          }
+        },
+        {
+          "name": "Hyper-RAG-Lite",
+          "type": "Solution",
+          "description": {
+            "zh": "Hyper-RAG的輕量變體，保留高階關聯擴散能力，但僅檢索實體資訊（節點）",
+            "en": "Lightweight variant of Hyper-RAG, retains high-order correlation diffusion capability but only retrieves entity information (nodes)"
+          }
+        },
+        {
+          "name": "Retrieval Speed",
+          "type": "Constraint",
+          "description": {
+            "zh": "從知識庫獲取相關知識並構建提示所需的時間",
+            "en": "Time required to fetch relevant knowledge from the database and construct the prompt"
+          }
+        }
+      ],
+      "conditions": {
+        "zh": ["當應用場景對回應延遲敏感", "當計算資源有限", "當仍需維持比基礎RAG更好的準確性與全面性"],
+        "en": ["When the application is latency-sensitive", "When computational resources are limited", "When better accuracy and comprehensiveness than basic RAG are still required"]
+      },
+      "observed_issues_or_risks": {
+        "zh": ["LightRAG 省略聚類（高階關聯）導致性能下降", "GraphRAG 檢索社群資訊需要分層匹配，速度緩慢（2.83秒）", "基礎RAG速度快（0.033秒）但性能顯著落後"],
+        "en": ["LightRAG's omission of clustering (high-order correlations) leads to performance degradation", "GraphRAG's retrieval of community information requires layer-by-layer matching, causing slowness (2.83s)", "Basic RAG is fast (0.033s) but its performance lags significantly"]
+      },
+      "outcomes_or_consequences": {
+        "zh": ["Hyper-RAG-Lite 檢索時間 0.315秒，是 LightRAG (0.676秒) 的約兩倍速", "Hyper-RAG-Lite 性能超越 LightRAG 和 GraphRAG", "在速度-性能圖上，Hyper-RAG 與 Hyper-RAG-Lite 位於左上最佳區"],
+        "en": ["Hyper-RAG-Lite retrieval time is 0.315s, approximately twice as fast as LightRAG (0.676s)", "Hyper-RAG-Lite performance surpasses both LightRAG and GraphRAG", "On the speed-performance plot, Hyper-RAG and Hyper-RAG-Lite reside in the top-left optimal quadrant"]
+      },
+      "decision_boundaries": [
+        {
+          "boundary_type": "trade-off",
+          "description": {
+            "zh": "不可為了追求極致速度（如基礎RAG）而完全放棄結構化關聯，這會導致在複雜查詢下幻覺風險大增。必須在關聯完整性與檢索效率間取得平衡。",
+            "en": "Do not pursue extreme speed (like basic RAG) at the complete expense of structured correlations, as this drastically increases hallucination risk with complex queries. A balance must be struck between correlation completeness and retrieval efficiency."
+          },
+          "affected_roles": ["architect", "senior_engineer"]
+        }
+      ],
+      "non_applicability_notes": {
+        "zh": "「省略高階資訊處理以換取速度」的輕量化策略（如LightRAG）在此情境下並非最佳解，因為性能損失過大。",
+        "en": "The lightweight strategy of 'omitting high-order information processing for speed' (e.g., LightRAG) is NOT optimal here due to excessive performance loss."
+      },
+      "architecture_evolution_note": {
+        "zh": "隨著查詢複雜度演進，LightRAG 的性能衰退比 Hyper-RAG-Lite 更顯著，後者因保留高階關聯擴散而更具韌性。",
+        "en": "As query complexity evolves, LightRAG's performance degrades more significantly than Hyper-RAG-Lite's, the latter being more resilient due to retained high-order correlation diffusion."
+      },
+      "counterfactuals": [
+        {
+          "changed_condition": {
+            "zh": "若在效能敏感的神經醫學問答系統中選擇 LightRAG 作為輕量方案",
+            "en": "If LightRAG were chosen as the lightweight solution for a latency-sensitive neurological QA system"
+          },
+          "alternative_outcome": {
+            "zh": "系統在處理多階段嵌套問題時，因缺乏高階關聯引導，回答的全面性與連貫性將顯著低於 Hyper-RAG-Lite，可能遺漏關鍵的跨實體關聯。",
+            "en": "When handling multi-stage nested questions, the system would generate responses with significantly lower comprehensiveness and coherence than Hyper-RAG-Lite due to the lack of high-order correlation guidance, potentially missing critical cross-entity relationships."
+          }
+        }
+      ],
+      "confidence_score": 0.9,
+      "source_reference": {
+        "section": "Section 1.5 Efficiency Analysis",
+        "page": "16-17"
+      },
+      "llm_usage_policy": {
+        "allowed": ["summarize_context", "explain_existing_decisions", "translate_between_languages"],
+        "forbidden": ["generate_new_decisions", "override_boundaries", "invent_facts"]
+      }
+    },
+    {
+      "context_id": "CTX-004",
+      "decision_level": "M",
+      "title": {
+        "zh": "根據查詢複雜度動態選擇知識表示層級（低階 vs 高階關聯）",
+        "en": "Dynamically selecting knowledge representation level (low-order vs high-order correlations) based on query complexity"
+      },
+      "context_intents": ["architecture_decision", "system_evolution", "pre_sales_evaluation"],
+      "primary_roles": ["architect", "senior_engineer"],
+      "entities": [
+        {
+          "name": "Low-order (Pairwise) Correlations",
+          "type": "Solution Component",
+          "description": {
+            "zh": "實體間的成對關聯，數量多（~13,000），涵蓋基本關係",
+            "en": "Pairwise correlations between entities, large in number (~13,000), covering basic relationships"
+          }
+        },
+        {
+          "name": "High-order (Beyond-pairwise) Correlations",
+          "type": "Solution Component",
+          "description": {
+            "zh": "涉及多個實體的關聯，數量較少（~4,000），但涵蓋知識更廣",
+            "en": "Correlations involving multiple entities, fewer in number (~4,000), but cover broader knowledge spectrum"
+          }
+        },
+        {
+          "name": "Query Nesting Level",
+          "type": "Constraint",
+          "description": {
+            "zh": "問題的嵌套層數，代表其複雜度與對先驗知識的需求深度",
+            "en": "The nesting level of a question, representing its complexity and depth of prior knowledge required"
+          }
+        }
+      ],
+      "conditions": {
+        "zh": ["當系統需要處理從簡單到複雜的查詢光譜", "當資源有限需優化知識檢索與利用", "當觀察到不同複雜度問題下各知識表示的效益差異"],
+        "en": ["When the system needs to handle a spectrum of queries from simple to complex", "When resources are limited and knowledge retrieval/utilization needs optimization", "When differential benefits of knowledge representations are observed across query complexities"]
+      },
+      "observed_issues_or_risks": {
+        "zh": ["對簡單查詢，僅使用低階關聯已足夠，加入高階關聯可能增加不必要的檢索開銷", "對複雜嵌套查詢，僅有低階關聯導致性能隨難度增加而下降", "僅使用高階關聯（數量少）在實驗中表現優於僅使用低階關聯"],
+        "en": ["For simple queries, low-order correlations suffice; adding high-order ones may incur unnecessary retrieval overhead", "For complex nested queries, only low-order correlations cause performance to drop with increasing difficulty", "Using only high-order correlations (fewer in number) performed better than using only low-order correlations in experiments"]
+      },
+      "outcomes_or_consequences": {
+        "zh": ["Hyper-RAG 在問題複雜度增加時，相對於 baseline LLM 的改進幅度從 12.7% (單階) 增至 15.0% (三階)", "高階關聯在關聯表示空間中涵蓋更廣的知識譜", "實現動態選擇可優化效能與資源使用"],
+        "en": ["Hyper-RAG's improvement over baseline LLM increases from 12.7% (one-stage) to 15.0% (three-stage) as question complexity rises", "High-order correlations cover a broader spectrum of knowledge within the correlation representation space", "Implementing dynamic selection can optimize performance and resource usage"]
+      },
+      "decision_boundaries": [
+        {
+          "boundary_type": "trade-off",
+          "description": {
+            "zh": "不可為所有查詢統一使用最完整的知識表示（如全量Hyper-RAG），這會對簡單查詢造成效能浪費。也不可為節省資源而對複雜查詢僅提供不足的知識表示。",
+            "en": "Do not uniformly use the most complete knowledge representation (e.g., full Hyper-RAG) for all queries, as it wastes performance on simple queries. Also, do not provide insufficient knowledge representation for complex queries merely to save resources."
+          },
+          "affected_roles": ["architect", "senior_engineer"]
+        }
+      ],
+      "non_applicability_notes": {
+        "zh": "「更多知識表示總是更好」的假設不適用於簡單查詢情境，可能導致延遲增加而無明顯效益提升。",
+        "en": "The assumption that 'more knowledge representation is always better' does NOT apply to simple query scenarios, potentially increasing latency without significant benefit gains."
+      },
+      "architecture_evolution_note": {
+        "zh": "隨著系統使用，查詢複雜度的分佈可能改變。若複雜查詢比例上升，系統需能自動增加對高階關聯的依賴，否則整體性能將衰退。",
+        "en": "As system usage evolves, the distribution of query complexity may shift. If the proportion of complex queries increases, the system must automatically increase reliance on high-order correlations, or overall performance will degrade."
+      },
+      "counterfactuals": [
+        {
+          "changed_condition": {
+            "zh": "若系統靜態配置，對所有查詢均使用完整的 Hyper-RAG（同時檢索低階與高階關聯）",
+            "en": "If the system is statically configured to use full Hyper-RAG (retrieving both low and high-order correlations) for all queries"
+          },
+          "alternative_outcome": {
+            "zh": "在處理大量簡單事實查詢（如「某藥物的常見劑量？」）時，系統會花費不必要的時間檢索與整合高階關聯，導致整體吞吐量下降，而回答品質並無顯著提升。",
+            "en": "When processing a high volume of simple factual queries (e.g., 'What is the common dosage of drug X?'), the system would spend unnecessary time retrieving and integrating high-order correlations, reducing overall throughput without significantly improving answer quality."
+          }
+        }
+      ],
+      "confidence_score": 0.85,
+      "source_reference": {
+        "section": "Section 1.2, 1.4, Table 3",
+        "page": "11-12, 15"
+      },
+      "llm_usage_policy": {
+        "allowed": ["summarize_context", "explain_existing_decisions", "translate_between_languages"],
+        "forbidden": ["generate_new_decisions", "override_boundaries", "invent_facts"]
+      }
+    },
+    {
+      "context_id": "CTX-005",
+      "decision_level": "S",
+      "title": {
+        "zh": "為開放式問題評估設計選擇式評估而非僅基於參考答案的評分",
+        "en": "Designing Selection-Based Assessment over scoring with reference answers for evaluating open-ended questions"
+      },
+      "context_intents": ["pre_sales_evaluation", "failure_analysis", "system_evolution"],
+      "primary_roles": ["senior_engineer", "pre_sales"],
+      "entities": [
+        {
+          "name": "Scoring-Based Assessment",
+          "type": "Method",
+          "description": {
+            "zh": "使用五個指標（全面性、多樣性等）並依賴參考答案進行0-100評分",
+            "en": "Uses five metrics (Comprehensiveness, Diversity, etc.) and relies on reference answers to score from 0-100"
+          }
+        },
+        {
+          "name": "Selection-Based Assessment",
+          "type": "Method",
+          "description": {
+            "zh": "基於八個指標讓LLM對兩個模型的回答進行投票，無需參考答案",
+            "en": "Uses eight metrics to let an LLM vote between responses from two models, does not require reference answers"
+          }
+        },
+        {
+          "name": "Open-ended question",
+          "type": "Environment",
+          "description": {
+            "zh": "無預定答案、需要細緻且依賴上下文回答的真實世界查詢",
+            "en": "Real-world queries without predetermined answers, requiring nuanced, context-dependent responses"
+          }
+        }
+      ],
+      "conditions": {
+        "zh": ["當評估真實世界中的開放式問題回答品質", "當缺乏可靠或唯一的參考答案", "當需要比較兩個模型或策略的相對優劣"],
+        "en": ["When evaluating answer quality for open-ended questions in real-world scenarios", "When reliable or singular reference answers are unavailable", "When needing to compare the relative strengths of two models or strategies"]
+      },
+      "observed_issues_or_risks": {
+        "zh": ["基於參考答案的評分方法本質上受限且有偏見，主要針對封閉式問題", "真實世界中大多數查詢是開放式的", "幻覺表現多樣且難以用單一參考答案量化"],
+        "en": ["Scoring methods based on reference answers are inherently limited and biased, primarily addressing closed-ended questions", "The vast majority of real-world queries are open-ended", "Hallucination manifestations are diverse and difficult to quantify with a single reference answer"]
+      },
+      "outcomes_or_consequences": {
+        "zh": ["選擇式評估可在無參考答案下進行模型比較", "使用八個指標進行投票提供更細緻的多方面評估", "在跨九個資料集的實驗中，選擇式評估顯示 Hyper-RAG 平均領先 Light RAG 35.5%"],
+        "en": ["Selection-based assessment enables model comparison without reference answers", "Voting across eight metrics allows for more granular multi-aspect evaluation", "In experiments across nine datasets, selection-based assessment showed Hyper-RAG leading Light RAG by 35.5% on average"]
+      },
+      "decision_boundaries": [
+        {
+          "boundary_type": "trust_breaking",
+          "description": {
+            "zh": "不可僅依賴基於封閉式問題與參考答案的評分來宣稱系統在真實開放式環境中的可靠性，這會建立錯誤的信任並掩蓋幻覺風險。",
+            "en": "Do not rely solely on scoring based on closed-ended questions and reference answers to claim system reliability in real-world open-ended environments. This creates false trust and masks hallucination risks."
+          },
+          "affected_roles": ["senior_engineer", "pre_sales", "compliance"]
+        }
+      ],
+      "non_applicability_notes": {
+        "zh": "「高評分即代表低幻覺」的假設在開放式問題評估中不成立，因為評分所依賴的參考答案本身可能無法覆蓋所有正確或合理的回答維度。",
+        "en": "The assumption that 'high scores imply low hallucinations' does NOT hold for open-ended question evaluation, because the reference answers underpinning the scores may not cover all dimensions of correct or reasonable responses."
+      },
+      "architecture_evolution_note": {
+        "zh": "當系統從實驗室封閉測試演進到真實產品環境時，評估方法必須同步從依賴參考答案的評分，演進到更能反映開放式查詢與相對比較的選擇式評估。",
+        "en": "As the system evolves from lab-based closed testing to real production environments, the evaluation method must concurrently evolve from reference-answer-dependent scoring to selection-based assessment that better reflects open-ended queries and relative comparisons."
+      },
+      "counterfactuals": [
+        {
+          "changed_condition": {
+            "zh": "若僅使用基於參考答案的評分來評估 Hyper-RAG 在多元領域的適應性",
+            "en": "If only reference-answer-based scoring were used to evaluate Hyper-RAG's adaptability across diverse domains"
+          },
+          "alternative_outcome": {
+            "zh": "可能無法充分捕捉其在法律、農業等領域對回答全面性與連貫性的顯著提升（分別達55.3%與41.3%），因為這些提升在封閉式評分中可能被低估。",
+            "en": "It might fail to fully capture its significant improvements in comprehensiveness and coherence in domains like legal and agriculture (55.3% and 41.3% respectively), as these improvements could be underestimated in closed-ended scoring."
+          }
+        }
+      ],
+      "confidence_score": 0.88,
+      "source_reference": {
+        "section": "Page 6, Section 1.3, 4.2",
+        "page": "6, 12-14, 26"
+      },
+      "llm_usage_policy": {
+        "allowed": ["summarize_context", "explain_existing_decisions", "translate_between_languages"],
+        "forbidden": ["generate_new_decisions", "override_boundaries", "invent_facts"]
+      }
+    },
+    {
+      "context_id": "CTX-006",
+      "decision_level": "M",
+      "title": {
+        "zh": "決定在知識建構階段合併跨區塊的重複實體與關聯描述",
+        "en": "Deciding to merge descriptions of duplicate entities and correlations across chunks during knowledge construction"
+      },
+      "context_intents": ["architecture_decision", "failure_analysis", "maintenance"],
+      "primary_roles": ["senior_engineer", "maintenance"],
+      "entities": [
+        {
+          "name": "Text Chunk",
+          "type": "Subsystem",
+          "description": {
+            "zh": "原始語料庫分割後的文本區塊，是知識提取的基本單位",
+            "en": "A segment of the raw corpus after partitioning, the basic unit for knowledge extraction"
+          }
+        },
+        {
+          "name": "Entity/Correlation Description",
+          "type": "Data",
+          "description": {
+            "zh": "由LLM為提取的實體或關聯生成的文本描述",
+            "en": "Text description generated by the LLM for an extracted entity or correlation"
+          }
+        },
+        {
+          "name": "Description Merging",
+          "type": "Process",
+          "description": {
+            "zh": "當相同實體或關聯從不同區塊被提取時，使用LLM合併其描述以確保一致與完整",
+            "en": "When the same entity or correlation is extracted from different chunks, using an LLM to merge their descriptions to ensure consistency and completeness"
+          }
+        }
+      ],
+      "conditions": {
+        "zh": ["當原始語料庫被分割為多個區塊進行處理", "當同一實體或關聯可能出現在多個區塊中", "當未合併的描述可能導致知識庫中存在矛盾或冗餘資訊"],
+        "en": ["When the raw corpus is partitioned into multiple chunks for processing", "When the same entity or correlation may appear in multiple chunks", "When unmerged descriptions could lead to contradictory or redundant information in the knowledge base"]
+      },
+      "observed_issues_or_risks": {
+        "zh": ["不同區塊對同一實體的描述可能側重不同方面，直接全部收錄會導致冗餘與潛在矛盾", "若僅收錄單一區塊的描述，可能遺失重要資訊", "使用大模型進行摘要合併可能引入錯誤或幻覺，影響增強效果"],
+        "en": ["Descriptions of the same entity from different chunks may focus on different aspects;收录 all directly leads to redundancy and potential contradiction", "If only the description from a single chunk is recorded, important information may be lost", "Using a large model to summarize and merge may introduce errors or hallucinations, negatively impacting augmentation effectiveness"]
+      },
+      "outcomes_or_consequences": {
+        "zh": ["合併後提供一致且完整的實體/關聯描述", "避免知識庫中的資訊矛盾", "合併過程可能引入的摘要錯誤是一個需要權衡的風險"],
+        "en": ["Provides consistent and complete entity/correlation descriptions after merging", "Avoids information contradictions within the knowledge base", "The risk of summary errors introduced during merging is a trade-off"]
+      },
+      "decision_boundaries": [
+        {
+          "boundary_type": "no_second_chance",
+          "description": {
+            "zh": "知識庫建構階段的描述合併決策一旦執行，後續難以修正合併過程可能引入的錯誤或遺失的細微差別。錯誤的描述會污染整個知識庫並影響所有後續檢索。",
+            "en": "The decision on description merging during the knowledge base construction phase, once executed, is difficult to correct for potential errors or lost nuances introduced during merging. Erroneous descriptions pollute the entire knowledge base and affect all subsequent retrievals."
+          },
+          "affected_roles": ["senior_engineer", "maintenance"]
+        }
+      ],
+      "non_applicability_notes": {
+        "zh": "常見的「保留所有原始出處資訊」的資料管理實踐在此不適用，因為會導致檢索時出現多個可能矛盾的描述，干擾LLM的知識利用。",
+        "en": "The common data management practice of 'preserving all original provenance information' does NOT apply here, as it would lead to multiple potentially contradictory descriptions during retrieval, confusing the LLM's knowledge utilization."
+      },
+      "architecture_evolution_note": {
+        "zh": "當語料庫規模與更新頻率演進時，離線的合併過程可能成為瓶頸。需要設計增量式合併機制，而非每次都進行全量重新合併。",
+        "en": "As the corpus size and update frequency evolve, the offline merging process may become a bottleneck. An incremental merging mechanism needs to be designed, rather than performing a full re-merge each time."
+      },
+      "counterfactuals": [
+        {
+          "changed_condition": {
+            "zh": "若決定在GraphRAG/Hyper-RAG建構中不合併重複實體描述，而是全部存入知識庫",
+            "en": "If it was decided not to merge duplicate entity descriptions in GraphRAG/Hyper-RAG construction, but to store them all in the knowledge base"
+          },
+          "alternative_outcome": {
+            "zh": "當查詢涉及「過度換氣」實體時，系統可能檢索到來自不同文獻區塊的數個描述，這些描述在細節或側重點上可能略有不同，導致提供給LLM的上下文混亂，甚至可能包含未被合約的細微矛盾。",
+            "en": "When a query involves the entity 'hyperventilation', the system might retrieve several descriptions from different literature chunks, which may differ slightly in details or emphasis, leading to confusing context provided to the LLM, potentially containing un-reconciled subtle contradictions."
+          }
+        }
+      ],
+      "confidence_score": 0.8,
+      "source_reference": {
+        "section": "Page 8, Page 15 (bottom), Knowledge Extraction",
+        "page": "8, 15, 20-21"
+      },
+      "llm_usage_policy": {
+        "allowed": ["summarize_context", "explain_existing_decisions", "translate_between_languages"],
+        "forbidden": ["generate_new_decisions", "override_boundaries", "invent_facts"]
+      }
+    },
+    {
+      "context_id": "CTX-007",
+      "decision_level": "S",
+      "title": {
+        "zh": "為初級工程師定義：避免直接使用原始語料描述作為知識增強來源",
+        "en": "For Junior Engineers: Avoid using raw corpus chunk descriptions directly as the source for knowledge augmentation"
+      },
+      "context_intents": ["risk_prevention", "maintenance", "failure_analysis"],
+      "primary_roles": ["junior_engineer", "maintenance"],
+      "entities": [
+        {
+          "name": "Raw Corpus Chunk Embedding (D)",
+          "type": "Solution Component",
+          "description": {
+            "zh": "直接將語料庫分塊後的嵌入表示，用於基礎RAG的檢索",
+            "en": "Embedding representation of directly split corpus chunks, used for retrieval in basic RAG"
+          }
+        },
+        {
+          "name": "Structured Correlation Knowledge (E_low / E_high)",
+          "type": "Solution Component",
+          "description": {
+            "zh": "從語料中提取出的結構化關聯知識（低階或高階）",
+            "en": "Structured correlation knowledge (low-order or high-order) extracted from the corpus"
+          }
+        }
+      ],
+      "conditions": {
+        "zh": ["當需要為LLM選擇先驗知識增強來源時", "當比較不同知識表示策略的效果時", "當初級工程師可能傾向選擇最簡單直接的「分塊嵌入」方法時"],
+        "en": ["When selecting a source of prior knowledge for LLM augmentation", "When comparing the effectiveness of different knowledge representation strategies", "When junior engineers might be inclined to choose the simplest 'chunk embedding' method"]
+      },
+      "observed_issues_or_risks": {
+        "zh": ["僅使用原始語料塊（D）的RAG，其性能（78.56）顯著低於結合結構化關聯知識的方法（如結合D與E_low達82.60）", "原始語料塊包含冗餘和未經提煉的資訊，檢索效率與精準度較低", "直接使用語料塊描述，相較於使用實體及其關聯的描述，可能引入更多噪音"],
+        "en": ["RAG using only raw corpus chunks (D) performs significantly lower (78.56) than methods combining structured correlation knowledge (e.g., combining D and E_low achieves 82.60)", "Raw corpus chunks contain redundant and unrefined information, leading to lower retrieval efficiency and precision", "Using raw chunk descriptions directly, compared to using descriptions of entities and their correlations, may introduce more noise"]
+      },
+      "outcomes_or_consequences": {
+        "zh": ["選擇僅基於D的簡單RAG會犧牲顯著的性能提升（~4-6分）", "結構化關聯知識能更有效地引導LLM生成準確、全面的回答", "此決策錯誤的成本是系統整體可靠性的下降，而非立即的系統故障"],
+        "en": ["Choosing simple RAG based solely on D sacrifices significant performance gains (~4-6 points)", "Structured correlation knowledge guides the LLM more effectively to generate accurate and comprehensive responses", "The cost of this decision error is a degradation in overall system reliability, not an immediate system failure"]
+      },
+      "decision_boundaries": [
+        {
+          "boundary_type": "high_cost",
+          "description": {
+            "zh": "為節省知識建構的初期開發工作量而選擇簡單分塊RAG，將導致後期為達到同等可靠性需要投入更多資源進行模型微調或人工監督，總成本更高。",
+            "en": "Choosing simple chunking RAG to save initial development effort in knowledge construction will lead to higher total costs later, as more resources will be needed for model fine-tuning or human supervision to achieve comparable reliability."
+          },
+          "affected_roles": ["junior_engineer", "architect"]
+        }
+      ],
+      "non_applicability_notes": {
+        "zh": "「越接近原始數據越好」的數據處理原則在此不適用。未經結構化提取的原始語料塊對於LLM的知識增強效果，不如從中提取出的實體與關聯描述。",
+        "en": "The data processing principle of 'closer to raw data is better' does NOT apply here. Unstructured raw corpus chunks are less effective for LLM knowledge augmentation than the extracted entity and correlation descriptions derived from them."
+      },
+      "architecture_evolution_note": {
+        "zh": "隨著語料庫規模增長，直接分塊檢索的效能會比基於實體/關聯的檢索下降更快，因為前者需要處理的向量維度與數量增長更直接。",
+        "en": "As the corpus scales, the performance of direct chunk retrieval will degrade faster than entity/correlation-based retrieval, because the former deals with a more direct increase in vector dimensions and quantity."
+      },
+      "counterfactuals": [
+        {
+          "changed_condition": {
+            "zh": "若在建立神經醫學問答系統時，初級工程師選擇了最簡單的「分塊+嵌入」RAG方案",
+            "en": "If a junior engineer chose the simplest 'chunk + embed' RAG scheme when building a neurological QA system"
+          },
+          "alternative_outcome": {
+            "zh": "系統的整體評分將停留在~78分，而非使用Hyper-RAG可達的~84分。這意味著回答的全面性、多樣性與可靠性將持續存在一個可察覺的差距，在處理邊界案例時幻覺風險更高。",
+            "en": "The system's overall score would remain at ~78, instead of reaching ~84 with Hyper-RAG. This means a perceptible gap in response comprehensiveness, diversity, and reliability would persist, with higher hallucination risk when handling edge cases."
+          }
+        }
+      ],
+      "confidence_score": 0.87,
+      "source_reference": {
+        "section": "Section 1.4, Table 3",
+        "page": "15"
+      },
+      "llm_usage_policy": {
+        "allowed": ["summarize_context", "explain_existing_decisions", "translate_between_languages"],
+        "forbidden": ["generate_new_decisions", "override_boundaries", "invent_facts"]
+      }
+    },
+    {
+      "context_id": "CTX-008",
+      "decision_level": "M",
+      "title": {
+        "zh": "在預售階段向客戶展示效能比較時，必須包含查詢複雜度維度",
+        "en": "In pre-sales demonstrations, performance comparisons must include the dimension of query complexity"
+      },
+      "context_intents": ["pre_sales_evaluation", "risk_prevention", "architecture_decision"],
+      "primary_roles": ["pre_sales", "architect"],
+      "entities": [
+        {
+          "name": "Performance Metric (e.g., Overall Score)",
+          "type": "Constraint",
+          "description": {
+            "zh": "用於衡量系統回答品質的綜合指標",
+            "en": "Composite metric used to measure the quality of system responses"
+          }
+        },
+        {
+          "name": "Query Complexity (Nesting Level)",
+          "type": "Environment",
+          "description": {
+            "zh": "查詢的嵌套層數，分為單階、兩階、三階問題",
+            "en": "The nesting level of a query, categorized into one-stage, two-stage, three-stage questions"
+          }
+        },
+        {
+          "name": "Pre-sales Demonstration",
+          "type": "Process",
+          "description": {
+            "zh": "向潛在客戶展示系統能力與價值的階段",
+            "en": "The phase of demonstrating system capabilities and value to potential customers"
+          }
+        }
+      ],
+      "conditions": {
+        "zh": ["當向客戶展示不同RAG方案或LLM的效能提升時", "當客戶的預期使用場景包含複雜、多層次的查詢時", "當僅展示平均性能可能掩蓋關鍵的弱點時"],
+        "en": ["When demonstrating performance improvements of different RAG solutions or LLMs to customers", "When the customer's expected usage scenarios include complex, multi-layered queries", "When showing only average performance might mask critical weaknesses"]
+      },
+      "observed_issues_or_risks": {
+        "zh": ["基线LLM與其他RAG方法（如Graph RAG）的性能隨查詢複雜度增加而下降", "Hyper-RAG在複雜度增加時性能保持穩定甚至改進幅度增大", "僅展示簡單查詢下的性能會產生誤導，低估了在真實複雜場景中的幻覺風險與方案差異"],
+        "en": ["Performance of baseline LLMs and other RAG methods (e.g., Graph RAG) declines as query complexity increases", "Hyper-RAG maintains stable performance or even shows increased improvement as complexity rises", "Demonstrating performance only on simple queries is misleading, underestimating hallucination risks and solution differences in real-world complex scenarios"]
+      },
+      "outcomes_or_consequences": {
+        "zh": ["包含複雜度維度的展示能真實反映方案在壓力下的韌性", "幫助客戶理解其特定使用場景（多層次診斷推理）下的預期性能", "建立對Hyper-RAG在高階關聯建模上價值的信任"],
+        "en": ["Including the complexity dimension in demonstrations truthfully reflects the solution's resilience under pressure", "Helps customers understand expected performance in their specific use cases (multi-layered diagnostic reasoning)", "Builds trust in the value of Hyper-RAG's high-order correlation modeling"]
+      },
+      "decision_boundaries": [
+        {
+          "boundary_type": "trust_breaking",
+          "description": {
+            "zh": "在預售中僅展示最佳案例或簡單查詢下的性能，一旦客戶在真實複雜場景中遭遇性能下降或幻覺，將嚴重破壞信任並可能導致法律糾紛。",
+            "en": "Demonstrating only best-case or simple-query performance during pre-sales will severely break trust if the customer encounters performance degradation or hallucinations in real complex scenarios, potentially leading to legal disputes."
+          },
+          "affected_roles": ["pre_sales", "compliance", "architect"]
+        }
+      ],
+      "non_applicability_notes": {
+        "zh": "「用平均性能代表整體能力」的常見產品展示策略在此不適用，因為不同方案對查詢複雜度的敏感度差異極大，平均數掩蓋了關鍵的風險剖面。",
+        "en": "The common product demonstration strategy of 'using average performance to represent overall capability' does NOT apply here, because different solutions have vastly different sensitivities to query complexity, and the average masks the critical risk profile."
+      },
+      "architecture_evolution_note": {
+        "zh": "隨著客戶業務深化，其查詢複雜度自然會演進。預售時基於簡單查詢的性能承諾，在系統部署後將迅速變得無關緊要。必須基於演進路徑進行展示。",
+        "en": "As the customer's business deepens, their query complexity will naturally evolve. Performance promises based on simple queries during pre-sales will quickly become irrelevant after deployment. Demonstrations must be based on the evolution path."
+      },
+      "counterfactuals": [
+        {
+          "changed_condition": {
+            "zh": "若在向醫院推銷診斷輔助系統時，僅展示Hyper-RAG和GraphRAG在單階問題上的性能對比（假設差距為6%）",
+            "en": "If, when pitching a diagnostic assistance system to a hospital, only the performance comparison between Hyper-RAG and GraphRAG on one-stage questions was shown (assuming a 6% gap)"
+          },
+          "alternative_outcome": {
+            "zh": "醫院採購後，在實際用於複雜的多症狀、多鑒別診斷推理（三階問題）時，會發現GraphRAG的性能衰退遠超Hyper-RAG，實際體驗差距遠大於6%，導致對供應商的不滿與系統使用率低下。",
+            "en": "After purchase, when actually used for complex multi-symptom, multi-differential diagnostic reasoning (three-stage questions), the hospital would find GraphRAG's performance degradation far exceeds Hyper-RAG's. The actual experienced gap would be much larger than 6%, leading to dissatisfaction with the vendor and low system utilization."
+          }
+        }
+      ],
+      "confidence_score": 0.92,
+      "source_reference": {
+        "section": "Section 1.2, Fig. 5",
+        "page": "11-12"
+      },
+      "llm_usage_policy": {
+        "allowed": ["summarize_context", "explain_existing_decisions", "translate_between_languages"],
+        "forbidden": ["generate_new_decisions", "override_boundaries", "invent_facts"]
+      }
+    },
+    {
+      "context_id": "CTX-009",
+      "decision_level": "S",
+      "title": {
+        "zh": "運維人員注意：Hyper-RAG知識檢索包含可選的關係結構檢索",
+        "en": "For Operators: Hyper-RAG knowledge retrieval includes optional relational structure retrieval"
+      },
+      "context_intents": ["maintenance", "system_evolution", "failure_analysis"],
+      "primary_roles": ["operator", "maintenance"],
+      "entities": [
+        {
+          "name": "Node (Entity) Information Retrieval",
+          "type": "Process",
+          "description": {
+            "zh": "檢索與查詢關鍵字相關的實體（節點）描述資訊",
+            "en": "Retrieving descriptive information of entities (nodes) relevant to the query keywords"
+          }
+        },
+        {
+          "name": "Relational Structure Retrieval",
+          "type": "Process",
+          "description": {
+            "zh": "檢索與查詢相關的關聯結構（超邊）及其描述",
+            "en": "Retrieving relational structures (hyperedges) relevant to the query and their descriptions"
+          }
+        },
+        {
+          "name": "Hyper-RAG-Lite Mode",
+          "type": "Operation Mode",
+          "description": {
+            "zh": "Hyper-RAG的運作模式之一，僅檢索節點資訊，但仍利用高階關聯進行資訊擴散",
+            "en": "An operational mode of Hyper-RAG that retrieves only node information but still utilizes high-order correlations for information diffusion"
+          }
+        }
+      ],
+      "conditions": {
+        "zh": ["當系統需要進行效能調優時", "當回應時間不符合服務等級協定（SLA）時", "當需要診斷特定查詢回答品質不佳的原因時"],
+        "en": ["When system performance needs tuning", "When response times fall outside Service Level Agreements (SLAs)", "When diagnosing the cause of poor answer quality for specific queries"]
+      },
+      "observed_issues_or_risks": {
+        "zh": ["檢索關係結構可以提升性能，但需額外計算資源", "僅檢索節點資訊（Hyper-RAG-Lite模式）可加速檢索過程", "關係結構檢索是可選的，為效能與品質權衡提供操作桿"],
+        "en": ["Retrieving relational structures can enhance performance but requires additional computational resources", "Retrieving only node information (Hyper-RAG-Lite mode) speeds up the retrieval process", "Relational structure retrieval is optional, providing a lever for trading off efficiency and quality"]
+      },
+      "outcomes_or_consequences": {
+        "zh": ["啟用關係結構檢索可預期獲得更高的回答品質（全面性、連貫性）", "禁用關係結構檢索（使用Lite模式）可降低延遲，適用於效能敏感場景", "運維人員可根據實時監控指標動態調整此設定"],
+        "en": ["Enabling relational structure retrieval is expected to yield higher answer quality (comprehensiveness, coherence)", "Disabling it (using Lite mode) reduces latency, suitable for latency-sensitive scenarios", "Operators can dynamically adjust this setting based on real-time monitoring metrics"]
+      },
+      "decision_boundaries": [
+        {
+          "boundary_type": "trade-off",
+          "description": {
+            "zh": "不可在未監控回答品質的情況下，為追求極致低延遲而全域關閉關係結構檢索。這可能導致在複雜查詢上幻覺率飆升，違反系統核心的可靠性承諾。",
+            "en": "Do not globally disable relational structure retrieval in pursuit of extreme low latency without monitoring answer quality. This could cause hallucination rates to spike on complex queries, violating the system's core reliability promise."
+          },
+          "affected_roles": ["operator", "maintenance"]
+        }
+      ],
+      "non_applicability_notes": {
+        "zh": "「所有可選功能都應預設開啟以獲得最佳效果」的常見配置原則在此不適用。關係結構檢索作為一個資源密集型選項，其啟用應與查詢複雜度和效能要求掛鉤。",
+        "en": "The common configuration principle that 'all optional features should be enabled by default for best results' does NOT apply here. Relational structure retrieval, as a resource-intensive option, should be enabled based on query complexity and performance requirements."
+      },
+      "architecture_evolution_note": {
+        "zh": "隨著硬體升級或檢索算法優化，關係結構檢索的成本可能降低，使得預設啟用成為可能。運維策略需隨基礎架構演進而調整。",
+        "en": "As hardware upgrades or retrieval algorithms improve, the cost of relational structure retrieval may decrease, making default enablement possible. Operational strategies must adjust as the infrastructure evolves."
+      },
+      "counterfactuals": [
+        {
+          "changed_condition": {
+            "zh": "若在系統高負載期間，運維人員為保障SLA而全域關閉了關係結構檢索，切換至純Lite模式",
+            "en": "If, during a period of high system load, operators globally disabled relational structure retrieval to protect SLAs, switching to pure Lite mode"
+          },
+          "alternative_outcome": {
+            "zh": "系統延遲得到改善，但同時段內用戶提交的複雜診斷推理查詢，其回答的連貫性與全面性評分可能會出現可察覺的下降，增加被遺漏關鍵關聯的風險。",
+            "en": "System latency would improve, but the coherence and comprehensiveness scores of responses to complex diagnostic reasoning queries submitted during the same period would likely see a perceptible drop, increasing the risk of missing critical correlations."
+          }
+        }
+      ],
+      "confidence_score": 0.83,
+      "source_reference": {
+        "section": "Discussion (Page 18-19)",
+        "page": "18-19"
+      },
+      "llm_usage_policy": {
+        "allowed": ["summarize_context", "explain_existing_decisions", "translate_between_languages"],
+        "forbidden": ["generate_new_decisions", "override_boundaries", "invent_facts"]
+      }
+    },
+    {
+      "context_id": "CTX-010",
+      "decision_level": "M",
+      "title": {
+        "zh": "承認當前知識建構方法在提取跨區塊關聯上的限制，並規劃未來研究方向",
+        "en": "Acknowledging the limitation of current knowledge construction in extracting cross-chunk correlations and planning future research directions"
+      },
+      "context_intents": ["architecture_decision", "system_evolution", "failure_analysis"],
+      "primary_roles": ["architect", "senior_engineer"],
+      "entities": [
+        {
+          "name": "Intra-chunk Correlation",
+          "type": "Constraint",
+          "description": {
+            "zh": "當前方法能有效提取的、存在於單一文本區塊內的實體關聯",
+            "en": "Entity correlations within a single text chunk, which the current method can extract effectively"
+          }
+        },
+        {
+          "name": "Cross-chunk Correlation",
+          "type": "Constraint/Failure",
+          "description": {
+            "zh": "分散在不同文本區塊之間的實體關聯，當前方法難以直接提取，需後處理合併",
+            "en": "Entity correlations that span across different text chunks, which are difficult for the current method to extract directly, requiring post-processing merging"
+          }
+        },
+        {
+          "name": "Post-processing Merge",
+          "type": "Process",
+          "description": {
+            "zh": "當前應對跨區塊關聯的補救措施，即在實體/關聯提取後進行合併",
+            "en": "The current remedial measure for handling cross-chunk correlations, i.e., merging after entity/correlation extraction"
+          }
+        }
+      ],
+      "conditions": {
+        "zh": ["當評估當前Hyper-RAG框架的完備性時", "當規劃系統的下一代知識建構能力時", "當遇到因關聯資訊分散導致回答不完整的案例時"],
+        "en": ["When evaluating the completeness of the current Hyper-RAG framework", "When planning the next-generation knowledge construction capabilities of the system", "When encountering cases where incomplete answers are due to scattered correlation information"]
+      },
+      "observed_issues_or_risks": {
+        "zh": ["大量相關資訊分散在多個區塊中", "當前方法難以直接提取跨區塊的關聯", "後處理合併步驟是必要的補救，但可能非最優"],
+        "en": ["A significant portion of relevant information spans multiple chunks", "The current method struggles to directly extract correlations across chunks", "The post-processing merge step is a necessary remedy but may be suboptimal"]
+      },
+      "outcomes_or_consequences": {
+        "zh": ["接受當前系統在知識完備性上存在已知限制", "將「開發跨區塊關聯融合與提取方法」列為未來研究重點", "探索文檔間關係建模以進一步增強知識庫維度與可擴展性"],
+        "en": ["Acknowledge that the current system has a known limitation in knowledge completeness", "Prioritize 'developing methods for fusion and extraction of cross-chunk correlations' as future research", "Explore modeling relationships between documents to further enhance knowledge base dimensionality and scalability"]
+      },
+      "decision_boundaries": [
+        {
+          "boundary_type": "irreversible",
+          "description": {
+            "zh": "若無視此限制並將當前系統宣傳為具備「完整」知識理解能力，將在遇到依賴跨區塊關聯的複雜查詢時，不可避免地產生系統性遺漏或錯誤，損害技術信譽。必須明確界定系統的能力邊界。",
+            "en": "Ignoring this limitation and promoting the current system as having 'complete' knowledge understanding capabilities will inevitably lead to systematic omissions or errors when faced with complex queries relying on cross-chunk correlations, damaging technical credibility. The system's capability boundaries must be clearly defined."
+          },
+          "affected_roles": ["architect", "pre_sales", "senior_engineer"]
+        }
+      ],
+      "non_applicability_notes": {
+        "zh": "「基於區塊的處理足以捕捉所有語義」的假設在處理長篇、論證複雜的文獻時不成立。關鍵的推理鏈常跨越多個區塊。",
+        "en": "The assumption that 'chunk-based processing is sufficient to capture all semantics' does NOT hold when dealing with lengthy, complex argumentative literature. Key reasoning chains often span multiple chunks."
+      },
+      "architecture_evolution_note": {
+        "zh": "此限制是當前架構的顯著演化節點。下一代系統必須突破區塊邊界，實現對文檔內與文檔間關聯的統一建模，否則知識表示的完整性將遇到天花板。",
+        "en": "This limitation is a significant evolution point for the current architecture. The next-generation system must break the chunk boundary to achieve unified modeling of intra- and inter-document correlations, otherwise, the completeness of knowledge representation will hit a ceiling."
+      },
+      "counterfactuals": [
+        {
+          "changed_condition": {
+            "zh": "若未來研究成功開發出高效的跨區塊關聯提取方法，並整合進Hyper-RAG框架",
+            "en": "If future research successfully develops an efficient cross-chunk correlation extraction method and integrates it into the Hyper-RAG framework"
+          },
+          "alternative_outcome": {
+            "zh": "系統在處理需要綜合多個文獻片段才能完整回答的複雜醫學問題時，其回答的全面性與準確性預計將獲得進一步提升，尤其在處理新興或跨學科主題時優勢更明顯。",
+            "en": "The system's comprehensiveness and accuracy in handling complex medical questions that require synthesizing multiple literature fragments are expected to improve further, with advantages being more pronounced especially for emerging or interdisciplinary topics."
+          }
+        }
+      ],
+      "confidence_score": 0.9,
+      "source_reference": {
+        "section": "Discussion (Page 19)",
+        "page": "19"
+      },
+      "llm_usage_policy": {
+        "allowed": ["summarize_context", "explain_existing_decisions", "translate_between_languages"],
+        "forbidden": ["generate_new_decisions", "override_boundaries", "invent_facts"]
+      }
+    }
+  ]
+}

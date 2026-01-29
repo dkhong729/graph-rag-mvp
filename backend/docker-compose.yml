@@ -1,0 +1,36 @@
+services:
+  # 後端 API 服務
+  backend:
+    build: .  # 指向包含 Dockerfile 的資料夾
+    container_name: graph-rag-backend
+    restart: unless-stopped
+    ports:
+      - "8306:8306"
+    environment:
+      # 注意：連線主機名要改為 postgres (Docker 內部網路名稱)
+      - DATABASE_URL=postgresql://decision_pages_user:decision_pages_pass@postgres:5432/decision_pages
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # 原有的 Postgres 服務
+  postgres:
+    image: postgres:15
+    container_name: decision-pages-postgres
+    restart: unless-stopped
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: decision_pages
+      POSTGRES_USER: decision_pages_user
+      POSTGRES_PASSWORD: decision_pages_pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U decision_pages_user -d decision_pages"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

@@ -1,0 +1,5 @@
+DOCUMENT_INTELLIGENCE_VERSION = "doc-intel.v1.1"
+MEETING_INTELLIGENCE_VERSION = "meeting-intel.v1.1"
+DOCUMENT_RENDER_VERSION = "doc-render.v1.1"
+MEETING_RENDER_VERSION = "meeting-render.v1.1"
+PERSONA_EXTRACT_VERSION = "persona-extract.v1.0"

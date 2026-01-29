@@ -1,0 +1,284 @@
+{
+  "document_metadata": {
+    "document_id": "OMRON_NSA_TX01B_SERIES_USER_MANUAL",
+    "document_title": "NSA-Series Industrial PC User's Manual",
+    "document_type": "user_manual",
+    "vendor": "Omron",
+    "product": "NSA-Series Industrial PC (NSA12/15-TX01B/S/E models)",
+    "version": "Cat. No. V233-E1-05"
+  },
+  "context_nodes": [
+    {
+      "context_id": "CTX-001",
+      "context_type": "safety_boundary",
+      "context_scope": "component",
+      "entities": [
+        {
+          "name": "Power supply connection cable",
+          "type": "device"
+        },
+        {
+          "name": "Installation technician",
+          "type": "role"
+        }
+      ],
+      "conditions": [
+        "During installation or maintenance of the NSA Industrial PC",
+        "When handling the power supply connection cable"
+      ],
+      "observed_issues_or_risks": [
+        "Scratching or forcefully bending the power supply cable",
+        "Pulling the cable instead of the connector housing when disconnecting"
+      ],
+      "outcomes_or_consequences": [
+        "Damaged cable insulation leading to electric shock",
+        "Broken internal wires causing overheating or fire",
+        "System failure and potential safety hazard"
+      ],
+      "decision_boundaries": [
+        {
+          "boundary_type": "safety_critical",
+          "description": "Electrical shock hazard with potential for serious injury; incorrect handling directly compromises safety systems."
+        },
+        {
+          "boundary_type": "no_second_chance",
+          "description": "Cable damage may not be visible but can cause latent failure leading to fire when system is operational."
+        }
+      ],
+      "confidence_score": 0.95,
+      "source_reference": {
+        "section": "Safety Precautions, Precautions for Safe Use",
+        "page": "12"
+      }
+    },
+    {
+      "context_id": "CTX-002",
+      "context_type": "deployment_constraint",
+      "context_scope": "system",
+      "entities": [
+        {
+          "name": "NSA Industrial PC",
+          "type": "device"
+        },
+        {
+          "name": "PCI expansion board",
+          "type": "device"
+        },
+        {
+          "name": "System designer",
+          "type": "role"
+        }
+      ],
+      "conditions": [
+        "When installing PCI expansion boards for system functionality extension",
+        "When determining the ambient operating temperature limits"
+      ],
+      "observed_issues_or_risks": [
+        "PCI boards generate additional heat (10°C rise at slot 1, 15°C at slot 2)",
+        "Operating temperature limits must be derated based on installed boards",
+        "Using non-EMC compliant PCI boards requires additional user mitigation measures"
+      ],
+      "outcomes_or_consequences": [
+        "Premature component failure if temperature limits are exceeded",
+        "System instability or shutdown due to overheating",
+        "EMC compliance failure requiring expensive retrofits",
+        "Need to re-evaluate entire panel cooling design"
+      ],
+      "decision_boundaries": [
+        {
+          "boundary_type": "high_cost",
+          "description": "Wrong PCI board selection can require complete thermal redesign of the control panel or forced reduction of operating temperatures."
+        }
+      ],
+      "confidence_score": 0.9,
+      "source_reference": {
+        "section": "1-2-2 General Specifications, Note 1-2",
+        "page": "29-30"
+      }
+    },
+    {
+      "context_id": "CTX-003",
+      "context_type": "maintenance_procedure",
+      "context_scope": "component",
+      "entities": [
+        {
+          "name": "RAS Board battery",
+          "type": "device"
+        },
+        {
+          "name": "Maintenance technician",
+          "type": "role"
+        },
+        {
+          "name": "RAS maintenance status data",
+          "type": "subsystem"
+        }
+      ],
+      "conditions": [
+        "During scheduled battery replacement (5-year guideline at 25°C)",
+        "When RAS board BATLOW indicator is lit",
+        "When performing preventive maintenance"
+      ],
+      "observed_issues_or_risks": [
+        "RAS board maintenance status data becomes corrupted during battery replacement",
+        "Failure to backup data before replacement results in loss of historical logs",
+        "Improper battery type or installation causes abnormal operation"
+      ],
+      "outcomes_or_consequences": [
+        "Loss of critical failure history and operating time data",
+        "Inability to analyze failure trends or perform root cause analysis",
+        "System may not record future RAS events properly",
+        "Need to reset and reconfigure RAS monitoring parameters"
+      ],
+      "decision_boundaries": [
+        {
+          "boundary_type": "no_second_chance",
+          "description": "Historical RAS data cannot be recovered once lost; this eliminates ability to perform reliability analysis and trend monitoring."
+        }
+      ],
+      "confidence_score": 0.85,
+      "source_reference": {
+        "section": "5-1-4 Batteries, Changing the RAS Board Battery",
+        "page": "75-76"
+      }
+    },
+    {
+      "context_id": "CTX-004",
+      "context_type": "operational_risk",
+      "context_scope": "system",
+      "entities": [
+        {
+          "name": "External 24V DC power supply",
+          "type": "device"
+        },
+        {
+          "name": "NSA Industrial PC power sequence control",
+          "type": "subsystem"
+        },
+        {
+          "name": "Plant electrician",
+          "type": "role"
+        }
+      ],
+      "conditions": [
+        "During power cycling or recovery from power interruption",
+        "When external input voltage is interrupted and then restored"
+      ],
+      "observed_issues_or_risks": [
+        "Power OFF/ON interval less than 10 seconds minimum requirement",
+        "Power interruption during OS shutdown or other critical operations",
+        "No built-in UPS or power interruption recovery functions"
+      ],
+      "outcomes_or_consequences": [
+        "System may fail to start properly",
+        "OS corruption or data loss if interrupted during write operations",
+        "Uncompleted operations may leave system in undefined state",
+        "Requires external UPS system for reliable operation in unstable power environments"
+      ],
+      "decision_boundaries": [
+        {
+          "boundary_type": "safety_critical",
+          "description": "Uncontrolled shutdown during industrial process control could lead to unsafe plant conditions or production loss."
+        }
+      ],
+      "confidence_score": 0.88,
+      "source_reference": {
+        "section": "3-4 Starting the Industrial PC and Procedure after Power Interruption",
+        "page": "52-53"
+      }
+    },
+    {
+      "context_id": "CTX-005",
+      "context_type": "decision_rationale",
+      "context_scope": "system",
+      "entities": [
+        {
+          "name": "Enhanced Write Filter (EWF)",
+          "type": "subsystem"
+        },
+        {
+          "name": "DiskOnModule (DOM)",
+          "type": "device"
+        },
+        {
+          "name": "System architect",
+          "type": "role"
+        }
+      ],
+      "conditions": [
+        "When configuring the NSA Industrial PC for reliable long-term operation",
+        "When deciding between system reliability and write performance",
+        "When determining storage configuration for the OS"
+      ],
+      "observed_issues_or_risks": [
+        "DOM has limited write cycles (100,000 cycles per sector)",
+        "EWF reduces available system memory when enabled",
+        "D: drive must have EWF disabled to store event logs persistently",
+        "Large data writes to DOM with EWF enabled can cause system instability"
+      ],
+      "outcomes_or_consequences": [
+        "Premature DOM failure if EWF disabled and frequent writes occur",
+        "Reduced system performance due to memory constraints with EWF enabled",
+        "Need for separate storage (e.g., memory card) for frequent data writes",
+        "Trade-off between DOM longevity and system flexibility"
+      ],
+      "decision_boundaries": [
+        {
+          "boundary_type": "high_cost",
+          "description": "DOM failure requires complete OS reinstallation and potentially system downtime; the EWF decision directly impacts total cost of ownership."
+        }
+      ],
+      "confidence_score": 0.82,
+      "source_reference": {
+        "section": "Appendix 2 Using the Enhanced Write Filter",
+        "page": "101-103"
+      }
+    },
+    {
+      "context_id": "CTX-006",
+      "context_type": "deployment_constraint",
+      "context_scope": "system",
+      "entities": [
+        {
+          "name": "Touch panel calibration",
+          "type": "subsystem"
+        },
+        {
+          "name": "PS/2 keyboard and mouse",
+          "type": "device"
+        },
+        {
+          "name": "Field service technician",
+          "type": "role"
+        }
+      ],
+      "conditions": [
+        "During initial system commissioning",
+        "When touch panel input becomes misaligned over time",
+        "When replacing or servicing the display unit"
+      ],
+      "observed_issues_or_risks": [
+        "Touch panel requires PS/2 keyboard and mouse connected for calibration",
+        "Touch panel coordinates drift over time requiring recalibration",
+        "Calibration data stored in EEPROM vs. Windows affects persistence across OS changes"
+      ],
+      "outcomes_or_consequences": [
+        "Inability to calibrate touch panel if PS/2 devices not available",
+        "Erratic touch input leading to operator errors",
+        "Need for periodic recalibration as part of preventive maintenance",
+        "Calibration settings lost if stored in Windows and OS is reinstalled"
+      ],
+      "decision_boundaries": [
+        {
+          "boundary_type": "high_cost",
+          "description": "Uncalibrated touch panel in industrial environment can lead to production errors, quality issues, or safety concerns from incorrect operator input."
+        }
+      ],
+      "confidence_score": 0.8,
+      "source_reference": {
+        "section": "3-5-1 Calibrating the Touch Panel",
+        "page": "56-57"
+      }
+    }
+  ]
+}
